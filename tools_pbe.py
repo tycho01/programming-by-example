@@ -1,5 +1,4 @@
 import sys
-sys.path.append("C:\\Users\\minori\\Desktop\\PBE_codes")
 import tokens as tk
 import numpy as np
 from functools import total_ordering

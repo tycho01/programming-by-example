@@ -1,5 +1,4 @@
 import sys
-sys.path.append("C:\\Users\\minori\\Desktop\\PBE_codes")
 from statistics import mode
 
 import numpy as np
