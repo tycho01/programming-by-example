@@ -106,50 +106,6 @@ class Match():
 		return string
 
 
-class OLD_Match():
-	def __init__(self, TokenSeq, num):
-		self.TokenSeq = TokenSeq
-		self.num = num
-		self.id = "Match"
-
-	def __eq__(self, other):
-		if not isinstance(other, Match):
-			return NotImplemented
-		return (self.TokenSeq, self.num) == (other.TokenSeq, other.num)
-
-	def __lt__(self, other):
-		if not isinstance(other, Match):
-			return NotImplemented
-		return (self.TokenSeq, self.num) < (other.TokenSeq, other.num)
-
-	def Conditional(self, String):
-		if self.get_tokenseq_len(String) >= self.num:
-			return True
-		else:
-			return False
-
-	def get_tokenseq_len(self, String):
-		# Divede string into regular expression
-		nodes = Makenode(String, [])
-		reg = make_token_withidx(nodes)
-
-		# Check if string contains all tokens in Match
-		for regexpr in self.RegExprs:
-			if regexpr.RegExpr == "MatchTok":
-				if not Nonecheck(String) and regexpr.matchtoken in String:
-					pass
-				else:
-					return 0
-			else:
-				if regexpr in reg:
-					pass
-				else:
-					return 0
-		return 1
-
-	def print_constructor(self):
-		print("(Match)", self.__class__.__name__, "(", [[i.RegExpr, i.num] for i in self.RegExprs], ",", self.num, ")")
-
 class Conjunction():
 	def __init__(self, Matches):
 		self.Matches = Matches
