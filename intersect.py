@@ -1,3 +1,4 @@
+from typing import List, Dict, Tuple, Union
 import sys
 
 import itertools
@@ -5,8 +6,8 @@ import numpy as np
 import copy
 import tools_pbe as tls
 
-# Compare two expressions and sreturn 1 if two are identical and return 0 if not
-def expr_comp(expr1, expr2):
+def expr_comp(expr1: tls.Constructor, expr2: tls.Constructor) -> int:
+	"""Compare two expressions and return 1 if two are identical and return 0 if not"""
 	if expr1.id == expr2.id:
 		if expr1.id == "SubStr" and expr1.Token == expr2.Token and expr1.num == expr2.num:
 			return 1
@@ -21,8 +22,8 @@ def expr_comp(expr1, expr2):
 	else:
 		return 0
 
-# Count the number of common expressions included in Graphs for each expression in graphs1
-def common_num_count(graphs1, Graphs):
+def common_num_count(graphs1: List[tls.DAG], Graphs: List[List[tls.DAG]]) -> List[int]:
+	"""Count the number of common expressions included in Graphs for each expression in graphs1"""
 	counts = list()
 	for graph1 in graphs1:
 		count = 0
@@ -33,7 +34,7 @@ def common_num_count(graphs1, Graphs):
 		counts.append(count)
 	return counts
 
-def max_common_num_count(Graphs, max_num):
+def max_common_num_count(Graphs: List[List[tls.DAG]], max_num: int) -> int:
 	common_num_list = list()
 	for graphs in Graphs:
 		common_num_list.append(common_num_count(graphs, Graphs))
@@ -47,7 +48,7 @@ def max_common_num_count(Graphs, max_num):
 		max_common_num = max([max(common_num_list[i]) for i in range(0, len(common_num_list))])
 	return max_common_num
 
-def make_common_num_list(Graphs, max_num):
+def make_common_num_list(Graphs: List[List[tls.DAG]], max_num: int) -> List[List[int]]:
 	common_num_list = list()
 	for graphs in Graphs:
 		common_num_list.append(common_num_count(graphs, Graphs))
@@ -57,8 +58,8 @@ def make_common_num_list(Graphs, max_num):
 				common_num_list[i][j] = -2
 	return common_num_list
 
-# Return generalized expression (which has no String)
-def generalize_expr(expression):
+def generalize_expr(expression: tls.Constructor) -> tls.Constructor:
+	"""Return generalized expression (which has no String)"""
 	if expression.id == "SubStr":
 		gen_expr = tls.SubStr(None, expression.Token, expression.num)
 	elif expression.id == "FirstStr":
@@ -71,7 +72,7 @@ def generalize_expr(expression):
 		gen_expr = expression
 	return gen_expr
 
-def search_expr(Graphs, common_num_list, max_num):
+def search_expr(Graphs: List[List[tls.DAG]], common_num_list: List[List[int]], max_num: int) -> List[tls.Constructor]:
 	exprs = list()
 
 	max_common_num = max([max(common_num_list[i]) for i in range(0, len(common_num_list))])
@@ -91,22 +92,22 @@ def search_expr(Graphs, common_num_list, max_num):
 						exprs.append(selected)
 		return exprs
 
-def select_graph(expression, graphs, common_num_list):
+def select_graph(expression: tls.Constructor, graphs: List[List[tls.DAG]], common_num_list: List[List[int]]) -> Union[Tuple[List[tls.DAG], List[int]], Tuple[int, int]]:
 	for graph, common_nums in zip(graphs, common_num_list):
 		expression2 = generalize_expr(graph.W[0])
 		if expr_comp(expression, expression2):
 			return graph, common_nums
 	return -1, -1
 
-# Return 1 if same one is found, 0 if unique
-def comparator_all(classes_list, classes1):
+def comparator_all(classes_list: List[List[tls.Constructor]], classes1: List[tls.Constructor]) -> int:
+	"""Return 1 if same one is found, 0 if unique"""
 	for classes2 in classes_list:
 		if comparator(classes1, classes2):
 			return 1
 	return 0
 
-# Compare two groups of classes and return 1 if same, 0 if different
-def comparator(classes1, classes2):
+def comparator(classes1: List[tls.Constructor], classes2: List[tls.Constructor]) -> int:
+	"""Compare two groups of classes and return 1 if same, 0 if different"""
 	classes1_c = copy.deepcopy(classes1)
 	classes2_c = copy.deepcopy(classes2)
 	if len(classes1_c) != len(classes2_c):
@@ -123,8 +124,8 @@ def comparator(classes1, classes2):
 						return comparator(classes1_c, classes2_c)
 		return 0
 
-def Make_partitions(Graphs, common_num_list, max_num=0):
-	partitions =list()
+def Make_partitions(Graphs: List[List[tls.DAG]], common_num_list: List[List[int]], max_num: int=0) -> Tuple[List[tls.Constructor], List[List[Union[Tuple[List[tls.DAG], List[int]], Tuple[int, int]]]]]:
+	partitions = list()
 	trace_exprs = list()
 	expressions = search_expr(Graphs, common_num_list, max_num) # SubStr, FirstStr
 	#for expression in expressions:
@@ -165,7 +166,8 @@ def Make_partitions(Graphs, common_num_list, max_num=0):
 							trace_exprs.append(trace_expr2)
 		return partitions, trace_exprs
 
-def check_contain(candidate, token_withidxs):
+# TODO: consider boolean return types for all these checks?
+def check_contain(candidate: List[str], token_withidxs: List[tls.Token_withidx]) -> int:
 	assert len(candidate) > 0
 	# ex.) regular_expr --> [AlphaTok(0), NumTok(0), SpaceTok(0), AlphaTok(1), NumTok(1)]
 	for token_withidx in token_withidxs:
@@ -177,7 +179,7 @@ def check_contain(candidate, token_withidxs):
 				return 0
 	return 1
 
-def search_match_regular_exprs(nodes_all):
+def search_match_regular_exprs(nodes_all: List[tls.Match]) -> List[tls.Match]:
 	match = nodes_all[0]
 	matches = list()
 
@@ -196,24 +198,23 @@ def search_match_regular_exprs(nodes_all):
 
 	return matches
 
-def make_adjacent(token_withidxs):
+# def make_adjacent(token_withidxs: List[tls.Token_withidx]) -> List[]:
+# 	return adjacents
 
-	return adjacents
+# def compare_adjacent(token_withidxs: List[tls.Token_withidx]) -> bool:
+# 	if 1:
+# 		return True
+# 	else:
+# 		return False
 
-def compare_adjacent(token_withidxs):
-	if 1:
-		return True
-	else:
-		return False
-
-def search_remain(adjacent, token_withidxs):
+def search_remain(adjacent, token_withidxs: List[tls.Token_withidx]) -> List[tls.Token_withidx]:
 	remain = list()
 	for token_withidx in token_withidxs:
 		if not token_withidx in adjacent:
 			remain.append(token_withidx)
 	return remain
 
-def disjoint_adjacents(token_withidxs):
+def disjoint_adjacents(token_withidxs: List[tls.Token_withidx]) -> Tuple[List[tls.Token_withidx], List[tls.Token_withidx]]:
 	# Product (Make all possible combinations)
 	candidates = list()
 	for i in range(2, len(token_withidxs)):
@@ -234,7 +235,7 @@ def disjoint_adjacents(token_withidxs):
 
 	return adjacents, remains
 
-def make_conj_wo_adjacent(token_withidxs):
+def make_conj_wo_adjacent(token_withidxs: List[tls.Token_withidx]) -> List[tls.Conjunction]:
 	conjunctions = list()
 
 	#Enumerate all token types
@@ -250,7 +251,7 @@ def make_conj_wo_adjacent(token_withidxs):
 
 	return conjunctions
 
-def make_conj_by_tokenidxs(token_withidxs):
+def make_conj_by_tokenidxs(token_withidxs: List[tls.Token_withidx]) -> List[tls.Conjunction]:
 	conjunctions = list()
 	#Make conjunction without considering adjacent tokens
 	conjunctions.extend(make_conj_wo_adjacent(token_withidxs))
@@ -280,7 +281,7 @@ def make_conj_by_tokenidxs(token_withidxs):
 				conjunctions.append(conjunction_new)
 	return conjunctions
 
-def search_common_regular_exprs(token_withidxs):
+def search_common_regular_exprs(token_withidxs: List[tls.Token_withidx]) -> List[tls.Conjunction]:
 	# Search shortest tokens
 	shortest_idx = np.argmin([len(v) for v in token_withidxs])
 
@@ -303,7 +304,7 @@ def search_common_regular_exprs(token_withidxs):
 	# Return regular expressions which satisfy all of the cases
 	return conjunctions #[Match([Al(0)],1), Match([Num(0)],1), Match([Al(0), Num(0)],1)]
 
-def make_matches(partition):
+def make_matches(partition: List[tls.DAG]) -> List[tls.Match]:
 	#Convert graph into regular expression
 	token_withidxs = list()
 	matches = list()
@@ -316,7 +317,7 @@ def make_matches(partition):
 	#matches.extend(search_match_regular_exprs(nodes_all))
 	return matches #[Match([Al(0)],1), Match([Num(0)],1), Match([Al(0), Num(0)],1)]
 
-def make_conjunctions(partition):
+def make_conjunctions(partition: List[tls.DAG]) -> List[tls.Conjunction]:
 	#Convert graph into regular expression
 	token_withidxs = list()
 	conjunctions = list()
@@ -327,7 +328,7 @@ def make_conjunctions(partition):
 	conjunctions.extend(search_common_regular_exprs(token_withidxs))
 	return conjunctions
 
-def make_switches(partitions):
+def make_switches(partitions: List[List[tls.DAG]]) -> List[tls.Constructor]:
 	# Make matches for each partition
 	matches = list()
 	for partition in partitions:
@@ -343,7 +344,7 @@ def make_switches(partitions):
 	# ex) ["A21 A22", "C231", "B10"], ["None"]
 	return matches_prod_new #[[Match([Al(0)],1), Match([N(0)],1)], [Match([Num(0)],1), Match([N(0)], 1)], [Match([Al(0), Num(0)], 1), Match([N(0)],1)]]
 
-def partitions_traceexprs_map(partitions, trace_exprs, switches):
+def partitions_traceexprs_map(partitions: List[List[tls.DAG]], trace_exprs: List[tls.Constructor], switches: List[tls.Constructor]) -> Tuple[List[List[tls.DAG]], List[List[tls.Constructor]]]:
 	# Duplicate partitions
 	partitions_new = list()
 	trace_expr_new = list()
@@ -353,7 +354,7 @@ def partitions_traceexprs_map(partitions, trace_exprs, switches):
 
 	return partitions_new, trace_expr_new
 
-def check_disjoint(DAG, switch):
+def check_disjoint(DAG: tls.DAG, switch: tls.Constructor) -> int:
 	#Check satisfuction of match for DAG
 	yn = list()
 	for match in switch:
@@ -365,8 +366,8 @@ def check_disjoint(DAG, switch):
 	else:
 		return 0
 
-#Check classifier is disjoint
-def validation(partitions, switch):
+def validation(partitions: List[List[tls.DAG]], switch: tls.Constructor) -> int:
+	"""Check classifier is disjoint"""
 	#Make input list
 	DAGs = list()
 	for partition in partitions:
@@ -380,7 +381,7 @@ def validation(partitions, switch):
 			return 0
 	return 1
 
-def Make_classifier(partitions_all, trace_exprs):
+def Make_classifier(partitions_all, trace_exprs) -> Tuple[List[List[tls.DAG]], List[tls.Constructor], List[tls.Constructor]]:
 	#Make switches for all of partitions
 	switches_all = list()
 	for partitions in partitions_all:
@@ -420,7 +421,7 @@ def Make_classifier(partitions_all, trace_exprs):
 
 	return partitions_val, trace_exprs_val, switches_val
 
-def INTERSECT(Graphs):
+def INTERSECT(Graphs: List[List[tls.DAG]]) -> Tuple[List[List[tls.DAG]], List[tls.Constructor], List[tls.Constructor]]:
 	#Make partitions
 	max_common_num = max_common_num_count(Graphs, "init")
 

@@ -1,3 +1,4 @@
+from typing import List, Dict, Tuple, Union, Callable
 import sys
 from statistics import mode
 
@@ -20,14 +21,16 @@ from collections import Counter
 
 seed = 10
 
-def random_forest_proc(x_train, x_test, y_train, y_test):	
+def random_forest_proc(x_train: pd.DataFrame, x_test: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame) -> Tuple[float, float]:
+	"""evaluate train and test sets on accuracy by random forest"""
 	random_forest = RandomForestClassifier(n_estimators=150, random_state=0)
 	random_forest.fit(x_train, y_train)
 	acc_random_forest_tr = round(random_forest.score(x_train, y_train) * 100, 2)
 	acc_random_forest_te = round(random_forest.score(x_test, y_test) * 100, 2)
 	return acc_random_forest_tr, acc_random_forest_te
 
-def random_forest_check(x_train, x_test, y_train, y_test, target_name, key=False):
+def random_forest_check(x_train: pd.DataFrame, x_test: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame, target_name: str, key: str=False) -> Tuple[float, float, float, float]:
+	"""evaluate train and test sets on accuracy by random forest using a given key, where available"""
 	acc_tr, acc_te = random_forest_proc(x_train, x_test, y_train[target_name], y_test[target_name])
 	print("acc: ", acc_tr, acc_te)
 	if key:
@@ -40,7 +43,8 @@ def random_forest_check(x_train, x_test, y_train, y_test, target_name, key=False
 	else:
 		return acc_tr, acc_te, 0.0, 0.0
 
-def Titanic_preprocess():
+def Titanic_preprocess() -> Tuple[pd.DataFrame, pd.DataFrame]:
+	"""get test and train sets for the Titanic survivor dataset"""
 	train_df = pd.read_csv('./DATA/train.csv')
 	test_df = pd.read_csv('./DATA/test.csv')
 	combine = [train_df, test_df]
@@ -81,7 +85,8 @@ def Titanic_preprocess():
 
 	return train_df, test_df
 
-def feature_generation(data, trace_expr, switch):
+def feature_generation(data: pd.DataFrame, trace_expr: tls.Constructor, switch: tls.Constructor) -> pd.DataFrame:
+	"""generate features for a dataset using trace expressions and switches"""
 	new_data = [dat for dat in data] #Copy data
 	exceptions = list()
 	count = 0
@@ -115,13 +120,15 @@ def feature_generation(data, trace_expr, switch):
 	new_df = pd.DataFrame(data=new_data, columns=['new_data'], dtype=type(new_data[0]))
 	return new_df['new_data']
 
-def feature_generation_comb(x_train, x_test, trace_expr, switch):
+def feature_generation_comb(x_train: pd.DataFrame, x_test: pd.DataFrame, trace_expr: tls.Constructor, switch: tls.Constructor) -> Tuple[pd.DataFrame, pd.DataFrame]:
+	"""generate features for both train and test sets"""
 	x_train_new = feature_generation(x_train, trace_expr, switch)
 	x_test_new = feature_generation(x_test, trace_expr, switch)
 
 	return x_train_new, x_test_new
 
-def data_transformation(Name, Inputs, Outputs, x_train, x_test, y_train, y_test, target_name="Survived", seed=0, flashfill=False):
+def data_transformation(Name: str, Inputs: List[str], Outputs: List[str], x_train: pd.DataFrame, x_test: pd.DataFrame, y_train: pd.DataFrame, y_test: pd.DataFrame, target_name: str="Survived", seed: int=0, flashfill: bool=False) -> Tuple[pd.DataFrame, pd.DataFrame, tls.Constructor, tls.Constructor]:
+	"""synthesizer-ranked feature generation"""
 	Graphs = list()
 	count = 0
 	for _input, _output in zip(Inputs, Outputs):
@@ -152,7 +159,8 @@ def data_transformation(Name, Inputs, Outputs, x_train, x_test, y_train, y_test,
 		new_fx_train, new_fx_test = feature_generation_comb(fx_train, fx_test, trace_expr, switch)
 		return new_fx_train, new_fx_test, trace_expr, switch
 
-def flashfill(Inputs, Outputs):
+def flashfill(Inputs: List[str], Outputs: List[str]) -> Tuple[tls.Constructor, tls.Constructor]:
+	"""synthesizer for flashfill"""
 	Graphs = list()
 	count = 0
 
@@ -169,7 +177,8 @@ def flashfill(Inputs, Outputs):
 	trace_expr, switch = rk.RANKING_FLASHFILL(trace_exprs_val, switches_val)
 	return trace_expr, switch
 
-def plot_feature_importance(X, y, name):
+def plot_feature_importance(X: pd.DataFrame, y: pd.DataFrame, name: str) -> None:
+	"""plot feature importance using random forest"""
 	# Build a forest and compute the feature importances
 	forest = ExtraTreesClassifier(n_estimators=150,
 	                              random_state=0)
@@ -198,7 +207,8 @@ def plot_feature_importance(X, y, name):
 	plt.savefig('figure_{}.png'.format(name))
 
 
-def start_process(Inputs, Outputs):
+def start_process(Inputs: List[str], Outputs: List[str]) -> Tuple[List[tls.Constructor], List[tls.Constructor]]:
+	"""synthesize a program from labeled examples"""
 	for i in range(0, len(Outputs)):
 		if Outputs[i] == None:
 			Outputs[i] = "None"
@@ -275,7 +285,8 @@ def start_process(Inputs, Outputs):
 
 	return trace_exprs, switches
 
-def programming_by_example(Inputs, Outputs, synthesizer=flashfill):
+def programming_by_example(Inputs: List[str], Outputs: List[str], synthesizer: Callable[[List[str], List[str]], Tuple[tls.Constructor, tls.Constructor]]=flashfill) -> Tuple[tls.Constructor, tls.Constructor]:
+	"""synthesize a program from labeled examples using flashfill"""
 	for i in range(0, len(Outputs)):
 		if Outputs[i] == None:
 			Outputs[i] = "None"

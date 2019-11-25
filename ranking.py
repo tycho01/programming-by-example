@@ -1,3 +1,4 @@
+from typing import List, Dict, Tuple, Union
 import sys
 
 import itertools
@@ -10,7 +11,8 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-def data_category_to_num(x_train, key, x_test=None):
+def data_category_to_num(x_train: pd.DataFrame, key: str, x_test: pd.DataFrame=None) -> Tuple[pd.DataFrame, pd.DataFrame, List[pd.DataFrame]]:
+	"""one-hot encode data"""
 	#Get unique values
 	values_tr = list(x_train[key].unique())
 	if x_test is not None:
@@ -35,7 +37,8 @@ def data_category_to_num(x_train, key, x_test=None):
 
 	return x_train, x_test, combine
 
-def conjunction_cost(constructor, costs_dict):
+def conjunction_cost(constructor: tls.Conjunction, costs_dict: Dict[str, int]) -> int:
+	"""calculate cost for a Conjunction"""
 	cost = 0
 	for match in constructor.Matches:
 		for token in match.TokenSeq:
@@ -43,12 +46,14 @@ def conjunction_cost(constructor, costs_dict):
 
 	return cost
 
-def substr_cost(constructor, costs_dict):
+def substr_cost(constructor: tls.SubStr, costs_dict: Dict[str, int]) -> int:
+	"""calculate cost for a Substr"""
 	cost = costs_dict[constructor.Token]
 
 	return cost
 
-def argument_cost(constructor):
+def argument_cost(constructor: tls.Constructor) -> int:
+	"""calculate cost for any constructor"""
 	costs_dict = {'StartTok': 1, 'EndTok': 1, 'AlphaTok': 2, 'NumTok': 2, 'SpaceTok':3, 'PeriodTok':3, 'CommaTok':3, \
 				'LeftParenthesisTok':3, 'RightParenthesisTok':3, 'SQuoteTok':3, 'DQuoteTok':3, 'HyphenTok':3, \
 				'UBarTok':3, 'SlashTok':3, 'NoneTok':3}
@@ -61,7 +66,8 @@ def argument_cost(constructor):
 
 	return cost
 
-def token_num_count(constructor, Token):
+def token_num_count(constructor: tls.Constructor, Token: str) -> int:
+	"""count the occurrences of a token in a given constructor"""
 	num = 0
 	if constructor.id == "Conjunction":
 		for match in constructor.Matches:
@@ -76,7 +82,8 @@ def token_num_count(constructor, Token):
 
 	return num
 
-def recursive_sort(token_idx, trace_exprs, switches):
+def recursive_sort(token_idx: int, trace_exprs: List[List[tls.Constructor]], switches: List[List[tls.Constructor]]) -> Tuple[List[List[tls.Constructor]], List[List[tls.Constructor]]]:
+	"""recursively sort trace expressions and switches"""
 	token_list = ['StartTok', 'EndTok', 'AlphaTok', 'NumTok', 'SpaceTok', 'PeriodTok', 'CommaTok', \
 				'LeftParenthesisTok', 'RightParenthesisTok', 'SQuoteTok', 'DQuoteTok', 'HyphenTok', \
 				'UBarTok', 'SlashTok', 'NoneTok']
@@ -103,7 +110,7 @@ def recursive_sort(token_idx, trace_exprs, switches):
 				part_trace_expr.append(trace_exprs[i])
 				part_switch.append(switches[i])
 
-		assert len(part_trace_expr) == len(part_switch) > 0, 'Assersion Error: Input[{0}, {1}]'.format(len(part_trace_expr), len(part_switch))
+		assert len(part_trace_expr) == len(part_switch) > 0, 'Assertion Error: Input[{0}, {1}]'.format(len(part_trace_expr), len(part_switch))
 		if len(part_trace_expr) != 1:
 			part_trace_expr, part_switch = recursive_sort(token_idx+1, part_trace_expr, part_switch)
 			trace_exprs_sort.extend(part_trace_expr)
@@ -114,13 +121,15 @@ def recursive_sort(token_idx, trace_exprs, switches):
 
 	return trace_exprs_sort, switches_sort #[[trace],[trace],[trace]], [[swi],[swi],[swi]]
 
-def count_argnum(conjunction):
+def count_argnum(conjunction: tls.Conjunction) -> int:
+	"""count the number of matches in a conjunction"""
 	num = 0
 	for match in conjunction.Matches:
 		num += len(match.TokenSeq) * match.num
 	return num
 
-def RANKING_FLASHFILL(trace_exprs_val, switches_val):
+def RANKING_FLASHFILL(trace_exprs_val: List[List[tls.Constructor]], switches_val: List[List[tls.Constructor]]) -> Tuple[List[tls.Constructor], List[tls.Constructor]]:
+	"""rank trace expressions and switches for flashfill"""
 	# Prefer fewer arguments in conditionals and trace expressions
 	arg_nums = list()
 	for switch, trace_expr in zip(switches_val, trace_exprs_val):
@@ -213,7 +222,8 @@ def RANKING_FLASHFILL(trace_exprs_val, switches_val):
 
 	return trace_exprs_sort[0], switches_sort[0]
 
-def RANKING(trace_exprs_val, switches_val, data, target, target_name, seed=0, test_size=0.0):
+def RANKING(trace_exprs_val: List[List[tls.Constructor]], switches_val: List[List[tls.Constructor]], data: List[str], target: List[float], target_name: str, seed: int=0, test_size: float=0.0) -> Tuple[List[tls.Constructor], List[tls.Constructor], List[float]]:
+	"""rank trace expressions and switches and give their accuracies"""
 	print(data.describe(include=['O']))
 	accs = list()
 

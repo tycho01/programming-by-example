@@ -1,3 +1,4 @@
+from typing import List, Dict, Tuple, Union
 import sys
 
 import itertools
@@ -6,8 +7,8 @@ from functools import total_ordering
 import tools_pbe as tls
 import tokens as tk
 
-# Return every atom satisfies the relationship between two nodes
-def atom_search(String, node_s, node_t, counters, s_num, last_idx):
+def atom_search(String: str, node_s: str, node_t: str, counters: Dict[str, int], s_num: int, last_idx: int) -> Tuple[List[Union[tls.ConstStr, tls.SubStr]], Dict[str, int]]:
+	"""Return a tuple of every atom satisfying the relationship between two nodes, and counters of token types"""
 	Atomlist = ["SubStr", "ConstStr"]
 	Atoms = list()
 	for atom in Atomlist:
@@ -48,12 +49,14 @@ def atom_search(String, node_s, node_t, counters, s_num, last_idx):
 			return -1
 	return Atoms, counters
 
-def Make_all_combination(edges, atoms):
+def Make_all_combination(edges: List[List[Tuple[int, int]]], atoms: List[List[Union[tls.ConstStr, tls.SubStr]]]) -> Tuple[List[List[Tuple[int, int]]], List[List[Union[tls.ConstStr, tls.SubStr]]]]:
+	"""return all combinations of edges and atoms"""
 	xis = list(itertools.product(*edges))
 	Ws = list(itertools.product(*atoms))
 	return xis, Ws
 
-def Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t):
+def Make_edge_atom_for_each_eta_t(_input: str, eta_s: List[Union[str, int]], eta_t: List[Union[str, int]]) -> Tuple[List[List[Tuple[int, int]]], List[List[Union[tls.ConstStr, tls.SubStr]]]]:
+	"""return edges and atoms for each eta a"""
 	edges_for_each_eta_t = list()
 	atoms_for_each_eta_t = list()
 	last_idx = len(eta_s) - 1
@@ -72,8 +75,8 @@ def Make_edge_atom_for_each_eta_t(_input, eta_s, eta_t):
 
 	return edges_for_each_eta_t, atoms_for_each_eta_t
 
-# Make corresponding DAGs for each input / output pair
-def GENERATE(_input, _output):
+def GENERATE(_input: str, _output: str) -> List[tls.DAG]:
+	"""Make corresponding DAGs for each input / output pair"""
 	eta_s = tls.Makenode(_input, [])
 	eta_t = tls.Makenode(_output, [])
 	eta = [eta_s, eta_t]
