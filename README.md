@@ -5,6 +5,8 @@ In this repository, I implemented the FLASHFILL [1] algorithm that synthesizes s
 To run PBE, you just type
 
 ```
+conda env create -n pbe -f environment.yml
+conda activate pbe
 python main.py
 ```
 

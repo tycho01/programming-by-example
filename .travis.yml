@@ -1,6 +1,7 @@
  
 language: python
 install:
-  - pip install -r requirements.txt
+  - conda env create -n pbe -f environment.yml
+  - conda activate pbe
 script:
   - python main.py
